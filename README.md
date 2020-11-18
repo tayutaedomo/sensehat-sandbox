@@ -10,7 +10,10 @@ $ cd sensehat-sandbox
 
 ## fonts
 ```
-$ cd fonts
-$ python3 font8x8.py
+$ python3 fonts/font8x8.py
+```
+
+```
+$ python3 fonts/font4x8.py
 ```
 
