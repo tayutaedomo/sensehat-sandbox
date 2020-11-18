@@ -60,25 +60,25 @@ class Char8x8:
 
     def next_numeric(self):
         self.index_n += 1
-        if len(Char8x8.NUMERICS) <= self.index_n:
+        if self.index_n >= len(Char8x8.NUMERICS):
             self.index_n = 0
         return Char8x8.NUMERICS[self.index_n]
 
     def next_upper_char(self):
         self.index_u += 1
-        if len(Char8x8.UPPER_CHARS) <= self.index_u:
+        if self.index_u >= len(Char8x8.UPPER_CHARS):
             self.index_u = 0
         return Char8x8.UPPER_CHARS[self.index_u]
 
     def next_lower_char(self):
         self.index_l += 1
-        if len(Char8x8.LOWER_CHARS) <= self.index_l:
+        if self.index_l >= len(Char8x8.LOWER_CHARS):
             self.index_l = 0
         return Char8x8.LOWER_CHARS[self.index_l]
 
     def next_symbol(self):
         self.index_s += 1
-        if len(Char8x8.SYMBOLS) <= self.index_s:
+        if self.index_s >= len(Char8x8.SYMBOLS):
             self.index_s = 0
         return Char8x8.SYMBOLS[self.index_s]
 
