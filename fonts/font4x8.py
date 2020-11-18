@@ -20,8 +20,11 @@ class Font4x8:
             self.font_char = json.load(f)
 
     def show_chars(self, chars):
-        # TODO
-        pass
+        if len(chars) == 1:
+            self.show_char(chars[0], True, False)
+        else:
+            self.show_char(chars[0], True, False)
+            self.show_char(chars[1], False, True)
 
     def show_char(self, char, clear=False, right=True):
         font_data = self.font_char.get(char)
@@ -107,16 +110,14 @@ if __name__ == '__main__':
 
             if event.direction == "up":
                 chFlg = 1
-                font.show_char(char.next_lower_char(), True, False)
-                font.show_char(char.next_lower_char(), False, True)
+                font.show_chars([char.next_lower_char(), char.next_lower_char()])
 
             #if event.direction == "right":
             #    chFlg = 1
 
             if event.direction == "left":
                 chFlg = 1
-                font.show_char(char.next_symbol(), True, False)
-                font.show_char(char.next_symbol(), False, True)
+                font.show_chars([char.next_symbol()])
 
             if event.direction == "middle":
                 chFlg = -1
