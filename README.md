@@ -8,12 +8,18 @@ $ cd sensehat-sandbox
 ```
 
 
-## fonts
+## Fonts
 ```
 $ python3 fonts/font8x8.py
 ```
 
 ```
 $ python3 fonts/font4x8.py
+```
+
+
+## LED
+```
+$ python3 led/color_edit.py
 ```
 
