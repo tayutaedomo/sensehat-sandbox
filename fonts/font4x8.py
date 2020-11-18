@@ -9,8 +9,7 @@ class Font4x8:
         self.json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'font4x8.json')
 
         self.color_main = (255, 255, 255)
-        #self.color_shadow = (0, 0, 0)
-        self.color_shadow = (48, 48, 48)
+        self.color_shadow = (0, 0, 64)
 
         self.font_char = {}
         self.init_font()
