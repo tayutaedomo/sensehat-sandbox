@@ -23,3 +23,6 @@ $ python3 fonts/font4x8.py
 $ python3 led/color_edit.py
 ```
 
+```
+$ python3 led/rainbow.py
+```
