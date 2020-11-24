@@ -30,8 +30,7 @@ class SokobanApp:
         self.initialized = False
         self.map_original = []
         self.map = []
-        self.player_y = None
-        self.player_x = None
+        self.player = None
 
     def load_map(self, file_path):
         try:
@@ -57,8 +56,7 @@ class SokobanApp:
                         row.append(col)
                     elif col == SokobanApp.MAP_PLAYER:
                         row.append(SokobanApp.MAP_FLOOR)
-                        self.player_y = y
-                        self.player_x = x
+                        self.player = Player(self, y, x)
 
                 self.map.append(row)
 
@@ -75,7 +73,7 @@ class SokobanApp:
     def start(self):
         self.clear_display()
         self.show_map()
-        self.show_player()
+        self.player.show()
 
         try:
             status = 0
@@ -89,11 +87,11 @@ class SokobanApp:
 
                     move_yx = SokobanApp.DIRECTION_MOVE_YX.get(event.direction)
                     if move_yx:
-                        self.move_player(move_yx[0], move_yx[1])
+                        self.player.move(move_yx[0], move_yx[1])
 
                         self.clear_display()
                         self.show_map()
-                        self.show_player()
+                        self.player.show()
 
                     #if event.direction == "up":
                     #if event.direction == "left":
@@ -112,24 +110,11 @@ class SokobanApp:
             self.clear_display()
             return False
 
-    def move_player(self, move_y, move_x):
-        self.player_y += move_y
-        self.player_x += move_x
-
-        # TODO
-
     def clear_display(self):
         if not self.sense:
             return
 
         self.sense.clear()
-
-    def show_player(self):
-        if not self.sense:
-            return
-
-        self.sense.set_pixel(
-            self.player_x, self.player_y, SokobanApp.COLOR_PLAYER)
 
     def show_map(self):
         if not self.sense:
@@ -157,6 +142,35 @@ class SokobanApp:
 
     def show_box(self, y, x):
         self.sense.set_pixel(x, y, SokobanApp.COLOR_BOX)
+
+
+class Player:
+    def __init__(self, app, y, x):
+        self.app = app
+        self.y = y
+        self.x = x
+
+    def move(self, move_y, move_x):
+        y = self.y + move_y
+        x = self.x + move_x
+
+        cell = self.app.map[y][x]
+
+        if cell == SokobanApp.MAP_WALL:
+            return
+
+        elif cell == SokobanApp.MAP_BOX:
+            # TODO: Box collision
+            return # TODO: Not implmemented yet
+
+        self.y = y
+        self.x = x
+
+    def show(self):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_PLAYER)
 
 
 
