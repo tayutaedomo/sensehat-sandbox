@@ -5,11 +5,17 @@ from sense_hat import SenseHat
 
 
 class SokobanApp:
-    MAP_WALL = '#'
-    MAP_FLOOR = ' '
-    MAP_GOAL = '.'
-    MAP_BOX = '$'
+    MAP_WALL   = '#'
+    MAP_FLOOR  = ' '
+    MAP_GOAL   = '.'
+    MAP_BOX    = '$'
     MAP_PLAYER = '@'
+    COLOR_WALL    = (0, 0, 255)     # Blue
+    COLOR_GOAL    = (255, 255, 0)   # Yellow
+    COLOR_ON_GOAL = (0, 255, 0)     # Green
+    COLOR_BOX     = (255, 0, 255)   # Purple
+    COLOR_PLAYER  = (255, 255, 255) # White
+
 
     def __init__(self, sense):
         self.sense = sense
@@ -61,6 +67,7 @@ class SokobanApp:
 
     def start(self):
         self.clear_display()
+        self.show_map()
         self.show_player()
 
         try:
@@ -101,7 +108,35 @@ class SokobanApp:
             return
 
         self.sense.set_pixel(
-            self.player_x, self.player_y, (255, 255, 255))
+            self.player_x, self.player_y, SokobanApp.COLOR_PLAYER)
+
+    def show_map(self):
+        if not self.sense:
+            return
+
+        for (y, cols) in enumerate(self.map):
+            for (x, col) in enumerate(cols):
+                if col == SokobanApp.MAP_WALL:
+                    self.show_wall(y, x)
+
+                elif col == SokobanApp.MAP_FLOOR:
+                    pass
+
+                elif col == SokobanApp.MAP_GOAL:
+                    self.show_goal(y, x)
+
+                elif col == SokobanApp.MAP_BOX:
+                    self.show_box(y, x)
+
+    def show_wall(self, y, x):
+        self.sense.set_pixel(x, y, SokobanApp.COLOR_WALL)
+
+    def show_goal(self, y, x):
+        self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
+
+    def show_box(self, y, x):
+        self.sense.set_pixel(x, y, SokobanApp.COLOR_BOX)
+
 
 
 if __name__ == '__main__':
