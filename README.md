@@ -26,3 +26,9 @@ $ python3 led/color_edit.py
 ```
 $ python3 led/rainbow.py
 ```
+
+## Sokoban
+```
+$ python3 sokoban/sokoban.py sokoban/map1.txt
+```
+
