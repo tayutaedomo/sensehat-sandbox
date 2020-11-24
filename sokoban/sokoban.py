@@ -28,21 +28,22 @@ class SokobanApp:
         self.sense = sense
 
         self.initialized = False
-        self.map_original = []
+        self.map_origin = []
         self.map = []
         self.player = None
+        self.box_manager = None
 
     def load_map(self, file_path):
         try:
-            self.map_original = []
+            self.map_origin = []
             self.map = []
 
             with open(file_path) as f:
                 for line in f:
                     line = line.rstrip()
-                    self.map_original.append(list(line))
+                    self.map_origin.append(list(line))
 
-            for (y, cols) in enumerate(self.map_original):
+            for (y, cols) in enumerate(self.map_origin):
                 row = []
 
                 for (x, col) in enumerate(cols):
@@ -60,6 +61,8 @@ class SokobanApp:
 
                 self.map.append(row)
 
+            self.box_manager = BoxManager(self)
+
             self.initialized = True
 
             return self.initialized
@@ -73,6 +76,7 @@ class SokobanApp:
     def start(self):
         self.clear_display()
         self.show_map()
+        self.box_manager.show()
         self.player.show()
 
         try:
@@ -91,6 +95,7 @@ class SokobanApp:
 
                         self.clear_display()
                         self.show_map()
+                        self.box_manager.show()
                         self.player.show()
 
                     #if event.direction == "up":
@@ -120,7 +125,7 @@ class SokobanApp:
         if not self.sense:
             return
 
-        for (y, cols) in enumerate(self.map):
+        for (y, cols) in enumerate(self.map_origin):
             for (x, col) in enumerate(cols):
                 if col == SokobanApp.MAP_WALL:
                     self.show_wall(y, x)
@@ -131,17 +136,11 @@ class SokobanApp:
                 elif col == SokobanApp.MAP_GOAL:
                     self.show_goal(y, x)
 
-                elif col == SokobanApp.MAP_BOX:
-                    self.show_box(y, x)
-
     def show_wall(self, y, x):
         self.sense.set_pixel(x, y, SokobanApp.COLOR_WALL)
 
     def show_goal(self, y, x):
         self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
-
-    def show_box(self, y, x):
-        self.sense.set_pixel(x, y, SokobanApp.COLOR_BOX)
 
 
 class Player:
@@ -150,27 +149,70 @@ class Player:
         self.y = y
         self.x = x
 
-    def move(self, move_y, move_x):
-        y = self.y + move_y
-        x = self.x + move_x
-
-        cell = self.app.map[y][x]
-
-        if cell == SokobanApp.MAP_WALL:
-            return
-
-        elif cell == SokobanApp.MAP_BOX:
-            # TODO: Box collision
-            return # TODO: Not implmemented yet
-
-        self.y = y
-        self.x = x
-
     def show(self):
         if not self.app.sense:
             return
 
         self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_PLAYER)
+
+    def move(self, move_y, move_x):
+        next_y = self.y + move_y
+        next_x = self.x + move_x
+
+        next_cell = self.app.map[next_y][next_x]
+
+        if next_cell == SokobanApp.MAP_WALL:
+            return
+
+        ret_box_move = self.app.box_manager.move(next_y, next_x, move_y, move_x)
+
+        if ret_box_move == False:
+            return
+
+        self.y = next_y
+        self.x = next_x
+
+
+class BoxManager:
+    def __init__(self, app):
+        self.app = app
+
+    def show(self):
+        if not self.app.sense:
+            return
+
+        for (y, cols) in enumerate(self.app.map):
+            for (x, col) in enumerate(cols):
+                if col == SokobanApp.MAP_BOX:
+                    self.show_box(y, x)
+
+                # TODO: On goal case
+                #elif col == SokobanApp.MAP_GOAL:
+                #    self.show_goal(y, x)
+
+    def show_box(self, y, x):
+        self.app.sense.set_pixel(x, y, SokobanApp.COLOR_BOX)
+
+    def move(self, y, x, move_y, move_x):
+        cell = self.app.map[y][x]
+
+        if cell != SokobanApp.MAP_BOX:
+            return None
+
+        next_y = y + move_y
+        next_x = x + move_x
+        next_cell = self.app.map[next_y][next_x]
+
+        if next_cell == SokobanApp.MAP_WALL:
+            return False
+
+        elif next_cell == SokobanApp.MAP_BOX:
+            return False
+
+        self.app.map[y][x] = SokobanApp.MAP_FLOOR
+        self.app.map[next_y][next_x] = SokobanApp.MAP_BOX
+
+        return True
 
 
 
