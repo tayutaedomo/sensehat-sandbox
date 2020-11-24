@@ -10,12 +10,19 @@ class SokobanApp:
     MAP_GOAL   = '.'
     MAP_BOX    = '$'
     MAP_PLAYER = '@'
+
     COLOR_WALL    = (0, 0, 255)     # Blue
     COLOR_GOAL    = (255, 255, 0)   # Yellow
     COLOR_ON_GOAL = (0, 255, 0)     # Green
     COLOR_BOX     = (255, 0, 255)   # Purple
     COLOR_PLAYER  = (255, 255, 255) # White
 
+    DIRECTION_MOVE_YX = {
+        'up':    (-1,  0),
+        'down':  ( 1,  0),
+        'left':  ( 0, -1),
+        'right': ( 0,  1),
+    }
 
     def __init__(self, sense):
         self.sense = sense
@@ -80,6 +87,14 @@ class SokobanApp:
                         prev_direction = None
                         continue
 
+                    move_yx = SokobanApp.DIRECTION_MOVE_YX.get(event.direction)
+                    if move_yx:
+                        self.move_player(move_yx[0], move_yx[1])
+
+                        self.clear_display()
+                        self.show_map()
+                        self.show_player()
+
                     #if event.direction == "up":
                     #if event.direction == "left":
                     #if event.direction == "down":
@@ -96,6 +111,12 @@ class SokobanApp:
         except KeyboardInterrupt:
             self.clear_display()
             return False
+
+    def move_player(self, move_y, move_x):
+        self.player_y += move_y
+        self.player_x += move_x
+
+        # TODO
 
     def clear_display(self):
         if not self.sense:
