@@ -75,7 +75,10 @@ class SokobanApp:
                         prev_direction = None
                         continue
 
+                    prev_direction = event.direction
+
                     move_yx = SokobanApp.DIRECTION_MOVE_YX.get(event.direction)
+
                     if move_yx:
                         self.player.move(move_yx[0], move_yx[1])
 
@@ -84,11 +87,14 @@ class SokobanApp:
                         self.box_manager.show()
                         self.player.show()
 
+                        if self.box_manager.is_all_on_goal():
+                            print('CLEAR!')
+                            self.show_clear()
+                            status = -1
+
                     if event.direction == "middle":
                         status = -1
                         sense.clear()
-
-                    prev_direction = event.direction
 
             return True
 
@@ -122,6 +128,9 @@ class SokobanApp:
 
     def show_goal(self, y, x):
         self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
+
+    def show_clear(self):
+        self.sense.show_message('Clear!')
 
     def get_map_cell(self, y, x):
         return self.map[y][x]
@@ -189,6 +198,15 @@ class BoxManager:
 
         return False
 
+    def is_all_on_goal(self):
+        ret = True
+
+        for box in self.boxes:
+            if not box.is_on_goal():
+                ret = False
+
+        return ret
+
 
 class Box:
     def __init__(self, app, y, x):
@@ -197,9 +215,7 @@ class Box:
         self.x = x
 
     def show(self):
-        cell = self.app.get_map_cell(self.y, self.x)
-
-        if cell == SokobanApp.MAP_GOAL:
+        if self.is_on_goal():
             self.show_on_goal()
         else:
             self.show_box()
@@ -234,6 +250,9 @@ class Box:
 
     def is_collision(self, y, x):
         return y == self.y and x == self.x
+
+    def is_on_goal(self):
+        return self.app.get_map_cell(self.y, self.x) == SokobanApp.MAP_GOAL
 
 
 
