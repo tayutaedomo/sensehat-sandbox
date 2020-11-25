@@ -84,11 +84,6 @@ class SokobanApp:
                         self.box_manager.show()
                         self.player.show()
 
-                    #if event.direction == "up":
-                    #if event.direction == "left":
-                    #if event.direction == "down":
-                    #if event.direction == "right":
-
                     if event.direction == "middle":
                         status = -1
                         sense.clear()
@@ -227,12 +222,10 @@ class Box:
         if next_cell == SokobanApp.MAP_WALL:
             return False
 
-        # TODO
-        #is_collision = self.app.box_manager.is_box_collision(next_y, next_x)
+        is_collision = self.app.box_manager.is_box_collision(next_y, next_x)
 
-        #if is_collision:
-        #    print(next_y, next_x) # debug
-        #    return False
+        if is_collision:
+            return False
 
         self.y = next_y
         self.x = next_x
