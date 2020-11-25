@@ -28,40 +28,26 @@ class SokobanApp:
         self.sense = sense
 
         self.initialized = False
-        self.map_origin = []
         self.map = []
         self.player = None
-        self.box_manager = None
+        self.box_manager = BoxManager(self)
 
     def load_map(self, file_path):
         try:
-            self.map_origin = []
             self.map = []
 
             with open(file_path) as f:
                 for line in f:
                     line = line.rstrip()
-                    self.map_origin.append(list(line))
+                    self.map.append(list(line))
 
-            for (y, cols) in enumerate(self.map_origin):
-                row = []
-
+            for (y, cols) in enumerate(self.map):
                 for (x, col) in enumerate(cols):
-                    if col == SokobanApp.MAP_WALL:
-                        row.append(col)
-                    elif col == SokobanApp.MAP_FLOOR:
-                        row.append(col)
-                    elif col == SokobanApp.MAP_GOAL:
-                        row.append(col)
-                    elif col == SokobanApp.MAP_BOX:
-                        row.append(col)
+                    if col == SokobanApp.MAP_BOX:
+                        self.box_manager.new_box(y, x)
+
                     elif col == SokobanApp.MAP_PLAYER:
-                        row.append(SokobanApp.MAP_FLOOR)
                         self.player = Player(self, y, x)
-
-                self.map.append(row)
-
-            self.box_manager = BoxManager(self)
 
             self.initialized = True
 
@@ -125,7 +111,7 @@ class SokobanApp:
         if not self.sense:
             return
 
-        for (y, cols) in enumerate(self.map_origin):
+        for (y, cols) in enumerate(self.map):
             for (x, col) in enumerate(cols):
                 if col == SokobanApp.MAP_WALL:
                     self.show_wall(y, x)
@@ -141,6 +127,9 @@ class SokobanApp:
 
     def show_goal(self, y, x):
         self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
+
+    def get_map_cell(self, y, x):
+        return self.map[y][x]
 
 
 class Player:
@@ -159,7 +148,7 @@ class Player:
         next_y = self.y + move_y
         next_x = self.x + move_x
 
-        next_cell = self.app.map[next_y][next_x]
+        next_cell = self.app.get_map_cell(next_y, next_x)
 
         if next_cell == SokobanApp.MAP_WALL:
             return
@@ -176,43 +165,82 @@ class Player:
 class BoxManager:
     def __init__(self, app):
         self.app = app
+        self.boxes = []
+
+    def new_box(self, y, x):
+        box = Box(app, y, x)
+        self.boxes.append(box)
 
     def show(self):
         if not self.app.sense:
             return
 
-        for (y, cols) in enumerate(self.app.map):
-            for (x, col) in enumerate(cols):
-                if col == SokobanApp.MAP_BOX:
-                    self.show_box(y, x)
-
-                # TODO: On goal case
-                #elif col == SokobanApp.MAP_GOAL:
-                #    self.show_goal(y, x)
-
-    def show_box(self, y, x):
-        self.app.sense.set_pixel(x, y, SokobanApp.COLOR_BOX)
+        for box in self.boxes:
+            box.show()
 
     def move(self, y, x, move_y, move_x):
-        cell = self.app.map[y][x]
+        for box in self.boxes:
+            ret_move = box.move(y, x, move_y, move_x)
 
-        if cell != SokobanApp.MAP_BOX:
+            if ret_move is not None:
+                return ret_move
+
+        return None
+
+    def is_box_collision(self, y, x):
+        for box in self.boxes:
+            if box.is_collision(y, x):
+                return True
+
+        return False
+
+
+class Box:
+    def __init__(self, app, y, x):
+        self.app = app
+        self.y = y
+        self.x = x
+
+    def show(self):
+        cell = self.app.get_map_cell(self.y, self.x)
+
+        if cell == SokobanApp.MAP_GOAL:
+            self.show_on_goal()
+        else:
+            self.show_box()
+
+    def show_box(self):
+        self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_BOX)
+
+    def show_on_goal(self):
+        self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_ON_GOAL)
+
+    def move(self, y, x, move_y, move_x):
+        if not self.is_collision(y, x):
             return None
 
         next_y = y + move_y
         next_x = x + move_x
-        next_cell = self.app.map[next_y][next_x]
+
+        next_cell = self.app.get_map_cell(next_y, next_x)
 
         if next_cell == SokobanApp.MAP_WALL:
             return False
 
-        elif next_cell == SokobanApp.MAP_BOX:
-            return False
+        # TODO
+        #is_collision = self.app.box_manager.is_box_collision(next_y, next_x)
 
-        self.app.map[y][x] = SokobanApp.MAP_FLOOR
-        self.app.map[next_y][next_x] = SokobanApp.MAP_BOX
+        #if is_collision:
+        #    print(next_y, next_x) # debug
+        #    return False
+
+        self.y = next_y
+        self.x = next_x
 
         return True
+
+    def is_collision(self, y, x):
+        return y == self.y and x == self.x
 
 
 
