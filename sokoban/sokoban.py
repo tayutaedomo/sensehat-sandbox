@@ -1,6 +1,7 @@
 import sys
 import traceback
 import copy
+from datetime import datetime, timedelta
 from sense_hat import SenseHat
 
 
@@ -47,7 +48,7 @@ class SokobanApp:
                         self.box_manager.new_box(y, x)
 
                     elif col == SokobanApp.MAP_PLAYER:
-                        self.player = Player(self, y, x)
+                        self.player = Player(self, y, x, SokobanApp.COLOR_PLAYER)
 
             self.initialized = True
 
@@ -63,13 +64,14 @@ class SokobanApp:
         self.clear_display()
         self.show_map()
         self.box_manager.show()
-        self.player.show()
 
         try:
             status = 0
             prev_direction = None
 
             while status >= 0:
+                self.player.show()
+
                 for event in sense.stick.get_events():
                     if event.direction == prev_direction:
                         prev_direction = None
@@ -137,16 +139,30 @@ class SokobanApp:
 
 
 class Player:
-    def __init__(self, app, y, x):
+    def __init__(self, app, y, x, color):
         self.app = app
         self.y = y
         self.x = x
+        self.color = color
+        self.led = LedFlash(self, 200)
 
     def show(self):
         if not self.app.sense:
             return
 
-        self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_PLAYER)
+        self.led.flash()
+
+    def light(self):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(self.x, self.y, self.color)
+
+    def light_off(self):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(self.x, self.y, (0, 0, 0))
 
     def move(self, move_y, move_x):
         next_y = self.y + move_y
@@ -164,6 +180,43 @@ class Player:
 
         self.y = next_y
         self.x = next_x
+
+
+class LedFlash:
+    def __init__(self, led, interval=0):
+        self.led = led
+
+        self.is_light_on = False
+        self.interval_td = timedelta(milliseconds=interval)
+        self.start_time = None
+
+    def light(self):
+        self.led.light()
+
+        if not self.is_light_on:
+            self.is_light_on = True
+            self.start_time = datetime.now()
+
+    def light_off(self):
+        self.led.light_off()
+
+        if self.is_light_on:
+            self.is_light_on = False
+            self.start_time = datetime.now()
+
+    def flash(self):
+        if self.start_time is None:
+            self.is_light_on = True
+            self.start_time = datetime.now()
+
+        if datetime.now() > self.start_time + self.interval_td:
+            self.is_light_on = not self.is_light_on
+            self.start_time = datetime.now()
+
+        if self.is_light_on:
+            self.light()
+        else:
+            self.light_off()
 
 
 class BoxManager:
