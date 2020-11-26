@@ -30,7 +30,10 @@ class SokobanApp:
 
         self.initialized = False
         self.map = []
-        self.player = None
+        self.map_height = 0
+        self.map_width = 0
+        self.floor = Floor(self, SokobanApp.COLOR_WALL, SokobanApp.COLOR_GOAL)
+        self.player = Player(self, SokobanApp.COLOR_PLAYER)
         self.box_manager = BoxManager(self)
 
     def load_map(self, file_path):
@@ -48,7 +51,11 @@ class SokobanApp:
                         self.box_manager.new_box(y, x)
 
                     elif col == SokobanApp.MAP_PLAYER:
-                        self.player = Player(self, y, x, SokobanApp.COLOR_PLAYER)
+                        self.player.init(y, x)
+
+            if len(self.map) > 1:
+                self.map_height = len(self.map)
+                self.map_width = len(self.map[0])
 
             self.initialized = True
 
@@ -62,7 +69,7 @@ class SokobanApp:
 
     def start(self):
         self.clear_display()
-        self.show_map()
+        self.floor.show()
         self.box_manager.show()
 
         try:
@@ -85,7 +92,7 @@ class SokobanApp:
                         self.player.move(move_yx[0], move_yx[1])
 
                         self.clear_display()
-                        self.show_map()
+                        self.floor.show()
                         self.box_manager.show()
                         self.player.show()
 
@@ -110,41 +117,55 @@ class SokobanApp:
 
         self.sense.clear()
 
-    def show_map(self):
-        if not self.sense:
-            return
-
-        for (y, cols) in enumerate(self.map):
-            for (x, col) in enumerate(cols):
-                if col == SokobanApp.MAP_WALL:
-                    self.show_wall(y, x)
-
-                elif col == SokobanApp.MAP_FLOOR:
-                    pass
-
-                elif col == SokobanApp.MAP_GOAL:
-                    self.show_goal(y, x)
-
-    def show_wall(self, y, x):
-        self.sense.set_pixel(x, y, SokobanApp.COLOR_WALL)
-
-    def show_goal(self, y, x):
-        self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
-
     def show_clear(self):
-        self.sense.show_message('Clear!')
+        self.sense.show_message('CLEAR!')
 
     def get_map_cell(self, y, x):
         return self.map[y][x]
 
 
-class Player:
-    def __init__(self, app, y, x, color):
+class Floor:
+    def __init__(self, app, color_wall, color_goal):
         self.app = app
-        self.y = y
-        self.x = x
+        self.color_wall = color_wall
+        self.color_goal = color_goal
+
+    def show(self):
+        if not self.app.sense:
+            return
+
+        for y in range(self.app.map_height):
+            for x in range(self.app.map_width):
+                cell = self.app.get_map_cell(y, x)
+
+                if cell == SokobanApp.MAP_WALL:
+                    self.show_wall(y, x)
+
+                elif cell == SokobanApp.MAP_GOAL:
+                    self.show_goal(y, x)
+
+    def show_wall(self, y, x):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(x, y, self.color_wall)
+
+    def show_goal(self, y, x):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(x, y, self.color_goal)
+
+
+class Player:
+    def __init__(self, app, color):
+        self.app = app
         self.color = color
         self.led = LedFlash(self, 200)
+
+    def init(self, y, x):
+        self.y = y
+        self.x = x
 
     def show(self):
         if not self.app.sense:
