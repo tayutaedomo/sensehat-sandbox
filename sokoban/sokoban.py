@@ -69,7 +69,7 @@ class SokobanApp:
 
     def start(self):
         self.clear_display()
-        self.floor.show()
+        self.floor.show(True)
         self.box_manager.show()
 
         try:
@@ -91,7 +91,6 @@ class SokobanApp:
                     if move_yx:
                         self.player.move(move_yx[0], move_yx[1])
 
-                        self.clear_display()
                         self.floor.show()
                         self.box_manager.show()
                         self.player.show()
@@ -130,10 +129,16 @@ class Floor:
         self.color_wall = color_wall
         self.color_goal = color_goal
 
-    def show(self):
+    def show(self, wall=False):
         if not self.app.sense:
             return
 
+        if wall:
+            self.show_walls()
+
+        self.show_goals()
+
+    def show_walls(self):
         for y in range(self.app.map_height):
             for x in range(self.app.map_width):
                 cell = self.app.get_map_cell(y, x)
@@ -141,19 +146,18 @@ class Floor:
                 if cell == SokobanApp.MAP_WALL:
                     self.show_wall(y, x)
 
-                elif cell == SokobanApp.MAP_GOAL:
-                    self.show_goal(y, x)
-
     def show_wall(self, y, x):
-        if not self.app.sense:
-            return
-
         self.app.sense.set_pixel(x, y, self.color_wall)
 
-    def show_goal(self, y, x):
-        if not self.app.sense:
-            return
+    def show_goals(self):
+        for y in range(self.app.map_height):
+            for x in range(self.app.map_width):
+                cell = self.app.get_map_cell(y, x)
 
+                if cell == SokobanApp.MAP_GOAL:
+                    self.show_goal(y, x)
+
+    def show_goal(self, y, x):
         self.app.sense.set_pixel(x, y, self.color_goal)
 
 
@@ -198,6 +202,8 @@ class Player:
 
         if ret_box_move == False:
             return
+
+        self.light_off()
 
         self.y = next_y
         self.x = next_x
