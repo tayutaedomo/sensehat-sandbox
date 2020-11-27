@@ -1,6 +1,7 @@
 import sys
 import traceback
 import copy
+from datetime import datetime, timedelta
 from sense_hat import SenseHat
 
 
@@ -29,7 +30,10 @@ class SokobanApp:
 
         self.initialized = False
         self.map = []
-        self.player = None
+        self.map_height = 0
+        self.map_width = 0
+        self.floor = Floor(self, SokobanApp.COLOR_WALL, SokobanApp.COLOR_GOAL)
+        self.player = Player(self, SokobanApp.COLOR_PLAYER)
         self.box_manager = BoxManager(self)
 
     def load_map(self, file_path):
@@ -47,7 +51,11 @@ class SokobanApp:
                         self.box_manager.new_box(y, x)
 
                     elif col == SokobanApp.MAP_PLAYER:
-                        self.player = Player(self, y, x)
+                        self.player.init(y, x)
+
+            if len(self.map) > 1:
+                self.map_height = len(self.map)
+                self.map_width = len(self.map[0])
 
             self.initialized = True
 
@@ -61,15 +69,16 @@ class SokobanApp:
 
     def start(self):
         self.clear_display()
-        self.show_map()
+        self.floor.show(True)
         self.box_manager.show()
-        self.player.show()
 
         try:
             status = 0
             prev_direction = None
 
             while status >= 0:
+                self.player.show()
+
                 for event in sense.stick.get_events():
                     if event.direction == prev_direction:
                         prev_direction = None
@@ -82,8 +91,7 @@ class SokobanApp:
                     if move_yx:
                         self.player.move(move_yx[0], move_yx[1])
 
-                        self.clear_display()
-                        self.show_map()
+                        self.floor.show()
                         self.box_manager.show()
                         self.player.show()
 
@@ -108,37 +116,58 @@ class SokobanApp:
 
         self.sense.clear()
 
-    def show_map(self):
-        if not self.sense:
-            return
-
-        for (y, cols) in enumerate(self.map):
-            for (x, col) in enumerate(cols):
-                if col == SokobanApp.MAP_WALL:
-                    self.show_wall(y, x)
-
-                elif col == SokobanApp.MAP_FLOOR:
-                    pass
-
-                elif col == SokobanApp.MAP_GOAL:
-                    self.show_goal(y, x)
-
-    def show_wall(self, y, x):
-        self.sense.set_pixel(x, y, SokobanApp.COLOR_WALL)
-
-    def show_goal(self, y, x):
-        self.sense.set_pixel(x, y, SokobanApp.COLOR_GOAL)
-
     def show_clear(self):
-        self.sense.show_message('Clear!')
+        self.sense.show_message('CLEAR!')
 
     def get_map_cell(self, y, x):
         return self.map[y][x]
 
 
-class Player:
-    def __init__(self, app, y, x):
+class Floor:
+    def __init__(self, app, color_wall, color_goal):
         self.app = app
+        self.color_wall = color_wall
+        self.color_goal = color_goal
+
+    def show(self, wall=False):
+        if not self.app.sense:
+            return
+
+        if wall:
+            self.show_walls()
+
+        self.show_goals()
+
+    def show_walls(self):
+        for y in range(self.app.map_height):
+            for x in range(self.app.map_width):
+                cell = self.app.get_map_cell(y, x)
+
+                if cell == SokobanApp.MAP_WALL:
+                    self.show_wall(y, x)
+
+    def show_wall(self, y, x):
+        self.app.sense.set_pixel(x, y, self.color_wall)
+
+    def show_goals(self):
+        for y in range(self.app.map_height):
+            for x in range(self.app.map_width):
+                cell = self.app.get_map_cell(y, x)
+
+                if cell == SokobanApp.MAP_GOAL:
+                    self.show_goal(y, x)
+
+    def show_goal(self, y, x):
+        self.app.sense.set_pixel(x, y, self.color_goal)
+
+
+class Player:
+    def __init__(self, app, color):
+        self.app = app
+        self.color = color
+        self.led = LedFlash(self, 200)
+
+    def init(self, y, x):
         self.y = y
         self.x = x
 
@@ -146,7 +175,19 @@ class Player:
         if not self.app.sense:
             return
 
-        self.app.sense.set_pixel(self.x, self.y, SokobanApp.COLOR_PLAYER)
+        self.led.flash()
+
+    def light(self):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(self.x, self.y, self.color)
+
+    def light_off(self):
+        if not self.app.sense:
+            return
+
+        self.app.sense.set_pixel(self.x, self.y, (0, 0, 0))
 
     def move(self, move_y, move_x):
         next_y = self.y + move_y
@@ -162,8 +203,47 @@ class Player:
         if ret_box_move == False:
             return
 
+        self.light_off()
+
         self.y = next_y
         self.x = next_x
+
+
+class LedFlash:
+    def __init__(self, led, interval=0):
+        self.led = led
+
+        self.is_light_on = False
+        self.interval_td = timedelta(milliseconds=interval)
+        self.start_time = None
+
+    def light(self):
+        self.led.light()
+
+        if not self.is_light_on:
+            self.is_light_on = True
+            self.start_time = datetime.now()
+
+    def light_off(self):
+        self.led.light_off()
+
+        if self.is_light_on:
+            self.is_light_on = False
+            self.start_time = datetime.now()
+
+    def flash(self):
+        if self.start_time is None:
+            self.is_light_on = True
+            self.start_time = datetime.now()
+
+        if datetime.now() > self.start_time + self.interval_td:
+            self.is_light_on = not self.is_light_on
+            self.start_time = datetime.now()
+
+        if self.is_light_on:
+            self.light()
+        else:
+            self.light_off()
 
 
 class BoxManager:
