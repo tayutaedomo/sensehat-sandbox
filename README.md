@@ -32,3 +32,7 @@ $ python3 led/rainbow.py
 $ python3 sokoban/sokoban.py sokoban/map1.txt
 ```
 
+```
+$ python3 sokoban/sokoban_scroll.py sokoban/map_scroll_1.txt
+```
+
